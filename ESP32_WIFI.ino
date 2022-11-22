@@ -13,6 +13,7 @@ WiFiServer wifiServer(port);
 void setup() {
 
   Serial.begin(baud);
+  WiFi.softAP("Senior Design"); //setup access point
   delay(1000); //in mili sec
 
   WiFi.begin(ssid, password);
@@ -28,6 +29,12 @@ void setup() {
 
   wifiServer.begin();
   Serial.println("Ready for Client...");
+
+  WiFi.softAP("Senior Design"); //setup access point
+  IPAddress IP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(IP);
+  
 }
 
 void loop() {
@@ -35,17 +42,15 @@ void loop() {
   WiFiClient client = wifiServer.available();
   client.setNoDelay(true); //sends bytes immediately
   
-
-
   if (client) {
 
     while (client.connected()) {
 
       //If there is data in the buffer
       // 0 = Stop
-	    // A = Travel to Site A
-	    // B = Travel to Site B
-	    // C = Travel to Site C
+      // A = Travel to Site A
+      // B = Travel to Site B
+      // C = Travel to Site C
       while (client.available()>0) {
           char c = client.read();
 
