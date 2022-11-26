@@ -15,10 +15,13 @@ int RX_Pin = 39;
 int TX_Pin = 32;
 
 //Define GPS and Serial and cords
-double X_Value;
-double Y_Value;
+char buffer[32];
+int count = 0;
+int launch = 0;
+float X_Value = 28.6744496;
+float Y_Value = -81.1834509;
 TinyGPSPlus gps;
-SoftwareSerial SerialGPS(RX_PIN, TX_PIN);
+SoftwareSerial SerialGPS(RX_Pin, TX_Pin);
 
 WiFiServer wifiServer(port);
 
@@ -64,39 +67,61 @@ void loop() {
           //Send this character to Arduino and ROS
           if((c != '\n') && (c != '\r')) Serial.println(c);      
       }
-      
-      //Read GPS
+
       while (SerialGPS.available() > 0) {
-        if (gps.encode(SerialGPS.read())) {
-          X_Value = (gps.location.lat(), 6);
-          Y_Value = (gps.location.lng(), 6);
-        }
-      if (millis() > 5000 && gps.charsProcessed() < 10) {
-          Serial.println("GPS NOT DETECTED!");
-          X_Value = 0;
-          Y_Value = 0;
-        }
-      
+          if (gps.encode(SerialGPS.read())) {
+              if (gps.location.isValid()) {
+                  Serial.print("Latitude: ");
+                  Serial.println(gps.location.lat());
+                  X_Value = gps.location.lat();
+                  Y_Value = gps.location.lng();
+              }
+              else {
+                  Serial.println("Location is not available");
+                  //Update GPS Example
+                  if(count == 0) {
+                      X_Value = 28.6744496;
+                      Y_Value = -81.1834509;
+                      count = 1;
+                      launch = 0;
+                  }
+                  else if (count == 1) {
+                      X_Value = 28.6745246;
+                      Y_Value = -81.1834009;
+                      count = 2;
+                      launch = 0;
+                  }
+                  else if (count == 2) {
+                      X_Value = 28.6745996;
+                      Y_Value = -81.1833509;
+                      count = 0;
+                      launch = 1;
+                  }     
+              }
+          }
+      }
+      if (millis() > 5000 && gps.charsProcessed() < 10) Serial.println("GPS NOT DETECTED!");
+
       //Send update to client
       //Make sure to send identifier, X or Y or L
       //Make sure to send '\n' to signal end of data
 
       // Xcord
+      snprintf(buffer, sizeof(buffer), "%.6f", X_Value);
       client.write("X");
-      client.write(X_Value);
+      client.write(buffer);
       client.write('\n');
 
       // Ycord
+      snprintf(buffer, sizeof(buffer), "%.6f", Y_Value);
       client.write("Y");
-      client.write(Y_Value);
+      client.write(buffer);
       client.write('\n');
-
-      //Check if its safe to launch
-
       
       //Launch Status
+      snprintf(buffer, sizeof(buffer), "%d", launch);
       client.write("L");
-      client.write("1"); //1 means safe to launch
+      client.write(buffer); //1 means safe to launch
       client.write('\n');
 
       delay(5000);
