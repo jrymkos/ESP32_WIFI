@@ -67,7 +67,7 @@ void loop() {
           //Send this character to Arduino and ROS
           if((c != '\n') && (c != '\r')) Serial.println(c);      
       }
-
+    
       while (SerialGPS.available() > 0) {
           if (gps.encode(SerialGPS.read())) {
               if (gps.location.isValid()) {
@@ -77,8 +77,11 @@ void loop() {
                   Y_Value = gps.location.lng();
               }
               else {
+
                   Serial.println("Location is not available");
-                  //Update GPS Example
+
+                  //Update GPS Example (for indoors when GPS doesent work)
+                  /*
                   if(count == 0) {
                       X_Value = 28.6744496;
                       Y_Value = -81.1834509;
@@ -96,7 +99,10 @@ void loop() {
                       Y_Value = -81.1833509;
                       count = 0;
                       launch = 1;
-                  }     
+                  }
+                  */
+                  
+                     
               }
           }
       }
